@@ -1,0 +1,479 @@
+Git
+
+----------------------- 章节分割线 -----------------------
+
+1.创建版本库
+	>创建一个目录/Users/michael/learngit/
+	
+	>通过git init命令把目录变成Git可以管理的仓库
+		$ git init
+		Initialized empty Git repository in /Users/michael/learngit/.git/
+		
+	此时，当前目录下多了一个.git的目录，这个目录是Git来跟踪管理版本库的。.git目录默认是隐藏的，用ls -ah命令就可以看见。
+
+1.1.文件添加到版本库
+	>创建文件readme.txt
+	
+	>用命令git add告诉Git，把文件添加到仓库：
+		$ git add readme.txt
+		
+	>用命令git commit告诉Git，把文件提交到仓库：
+		$ git commit -m "wrote a readme file"
+		[master (root-commit) cb926e7] wrote a readme file
+		 1 file changed, 2 insertions(+)
+		 create mode 100644 readme.txt
+		 
+	git commit命令，-m后面输入的是本次提交的说明，这样你就能从历史记录里方便地找到改动记录。
+	
+	-- FAQ --
+	Q：为什么Git添加文件需要add，commit一共两步呢？
+	A：因为commit可以一次提交很多文件，所以你可以多次add不同的文件，比如：
+		$ git add file1.txt
+		$ git add file2.txt file3.txt
+		$ git commit -m "add 3 files."
+
+----------------------- 章节分割线 -----------------------	
+	
+2.时光机穿梭
+	>用git status命令查看结果
+		$ git status
+		# On branch master
+		# Changes not staged for commit:
+		#   (use "git add <file>..." to update what will be committed)
+		#   (use "git checkout -- <file>..." to discard changes in working directory)
+		#
+		#    modified:   readme.txt
+		#
+		no changes added to commit (use "git add" and/or "git commit -a")
+		
+	git status命令可以让我们时刻掌握仓库当前的状态，上面的命令告诉我们，readme.txt被修改过了，但还没有准备提交的修改。
+	
+	>用git diff命令查看具体修改的内容
+		$ git diff readme.txt
+		diff --git a/readme.txt b/readme.txt
+		index 070bf74..128e67e 100644
+		--- a/readme.txt
+		+++ b/readme.txt
+		@@ -1,2 +1,3 @@
+		 Git is a version control system
+		-Git is free software
+		\ No newline at end of file
+		+Git is free software^M
+		+Git add
+		\ No newline at end of file
+		
+	>提交修改
+		与提交新文件一样
+			@ 用git add命令
+				$ git add readme.txt
+				
+			@ 用git staus命令查看仓库当前状态
+				$ git status
+				# On branch master
+				# Changes to be committed:
+				#   (use "git reset HEAD <file>..." to unstage)
+				#
+				#       modified:   readme.txt
+				
+			git status告诉我们，将要被提交的修改包括readme.txt
+			
+			@ 用git commit提交修改
+				$ git commit -m "add 'git add'"
+				[master d1d3621] add 'git add'
+				 1 file changed, 2 insertions(+), 1 deletion(-)
+			@ 用git status命令查看仓库当前状态
+				$ git status
+				On branch master
+				nothing to commit, working directory clean
+			Git告诉我们当前没有需要提交的修改，而且，工作目录是干净（working directory clean）的。
+			
+		要随时掌握工作区的状态，使用git status命令。
+		如果git status告诉你有文件被修改过，用git diff可以查看修改内容。
+
+2.1.版本回退
+	>用git log命令查看历史记录
+		$ git log
+		commit 65149386f710d70726bd8e0293f699bdc084dac7
+		Author: yujiafu <yujiafu@qiku.com>
+		Date:   Wed Oct 14 10:23:44 2015 +0800
+
+			append GPL
+
+		commit d1d362198ac9903006ffd141de017dd182d7ac16
+		Author: yujiafu <yujiafu@qiku.com>
+		Date:   Wed Oct 14 10:16:37 2015 +0800
+
+			add 'git add'
+
+		commit c3749ccf9070b43c8dfa476208f4907265035541
+		Author: yujiafu <yujiafu@qiku.com>
+		Date:   Wed Oct 14 09:52:04 2015 +0800
+
+			wrote a readme file
+			
+	如果嫌输出信息太多，看得眼花缭乱的，可以试试加上--pretty=oneline参数：
+		$ git log --pretty=oneline
+		65149386f710d70726bd8e0293f699bdc084dac7 append GPL
+		d1d362198ac9903006ffd141de017dd182d7ac16 add 'git add'
+		c3749ccf9070b43c8dfa476208f4907265035541 wrote a readme file
+		
+	>用git reset命令
+		@ 回退
+			上一个版本就是HEAD^，上上一个版本就是HEAD^^，当然往上100个版本写100个^比较容易数不过来，所以写成HEAD~100。
+			$ git reset --hard HEAD^
+			HEAD is now at d1d3621 add 'git add'
+			
+		@ 回到未来的某个指定版本（情形一：命令行窗口没有关闭，可以查看提交版本号的SHA1）
+			$ git reset --hard 6514
+			HEAD is now at 6514938 append GPL
+			
+		使用SHA1指定版本号，例如上面的6514...
+		
+		@ 回到未来的某个指定版本（情形二：命令行窗口已关闭，不能查看提交版本号的SHA1）
+			Git提供了一个命令git reflog用来记录你的每一次命令：
+				$ git reflog
+				d1d3621 HEAD@{0}: reset: moving to HEAD^
+				6514938 HEAD@{1}: reset: moving to 6514
+				d1d3621 HEAD@{2}: reset: moving to HEAD^
+				6514938 HEAD@{3}: commit: append GPL
+				d1d3621 HEAD@{4}: commit: add 'git add'
+				c3749cc HEAD@{5}: commit (initial): wrote a readme file
+				
+HEAD指向的版本就是当前版本，因此，Git允许我们在版本的历史之间穿梭，使用命令git reset --hard commit_id。
+穿梭前，用git log可以查看提交历史，以便确定要回退到哪个版本。
+要重返未来，用git reflog查看命令历史，以便确定要回到未来的哪个版本。
+		
+2.2.工作区和暂存区
+	工作区：自己创建的目录，其中的隐藏目录.git不算工作区，而是Git的版本库
+	Git的版本库里存了很多东西，其中最重要的就是称为stage（或者叫index）的暂存区，还有Git为我们自动创建的第一个分支master，以及指向master的一个指针叫HEAD。
+	
+	第一步是用git add把文件添加进去，实际上就是把文件修改添加到暂存区；
+	第二步是用git commit提交更改，实际上就是把暂存区的所有内容提交到当前分支。
+	
+	工作区 -add-> 暂存区(stage或index) -commit-> 当前分支
+		
+2.3.管理修改
+	Git跟踪并管理的是修改，而非文件。
+	
+	假如操作流程如下：
+		第一次修改 -> git add -> 第二次修改 -> git commit
+		
+	当你用git add命令后，在工作区的第一次修改被放入暂存区，准备提交，但是，在工作区的第二次修改并没有放入暂存区，所以，git commit只负责把暂存区的修改提交了，也就是第一次的修改被提交了，第二次的修改不会被提交。用git diff HEAD -- readme.txt命令可以查看工作区和版本库里面最新版本的区别：
+		$ git diff HEAD -- readme.txt
+		diff --git a/readme.txt b/readme.txt
+		index e018484..cd287ca 100644
+		--- a/readme.txt
+		+++ b/readme.txt
+		@@ -2,4 +2,4 @@ Git is a version control system
+		 Git is free software under the GPL
+		 Git add
+		 Git has a mutable index called stage
+		-Git tracks changes
+		+Git tracks changes of files^M
+	
+	-- 理解 --
+	对于每一次修改，都需要使用git add命令将文件放到暂存区，然后使用git commit命令才能完成提交。对于同一个文件，可能会有不同的修改，如果想完成全部的提交，必须多次将文件放到暂存区，然后才能顺利完成，这也从侧面说明了git管理的是修改，而非文件。
+	
+2.4.撤销修改
+	>用git checkout -- <filename>可以丢弃工作区的修改（注意是工作区）
+		$ git checkout -- readme.txt
+		
+	命令git checkout -- readme.txt意思就是，把readme.txt文件在工作区的修改全部撤销，这里有两种情况：
+		@ 一种是readme.txt自修改后还没有被放到暂存区，现在，撤销修改就回到和版本库一模一样的状态；
+		@ 一种是readme.txt已经添加到暂存区后，又作了修改，现在，撤销修改就回到添加到暂存区后的状态。
+
+	总之，就是让这个文件回到最近一次git commit或git add时的状态。
+
+	>用git reset HEAD file可以把暂存区的修改撤销掉
+		$ git reset HEAD readme.txt
+		Unstaged changes after reset:
+		M       readme.txt
+		
+	git reset命令既可以回退版本，也可以把暂存区的修改回退到工作区。当我们用HEAD时，表示最新的版本。
+		
+		再用git status查看暂存区是否是干净的
+			$ git status
+			On branch master
+			Changes not staged for commit:
+			  (use "git add <file>..." to update what will be committed)
+			  (use "git checkout -- <file>..." to discard changes in working directory)
+
+					modified:   readme.txt
+
+			no changes added to commit (use "git add" and/or "git commit -a")
+		
+		最后用git checkout -- files丢弃工作区的修改
+			$ git checkout -- readme.txt
+	
+		用git status查看
+			$ git status
+			On branch master
+			nothing to commit, working directory clean
+
+2.5.删除文件
+	在Git中，删除也是一个修改操作
+	>将testdel.txt添加到暂存区
+		$ git add testdel.txt
+	
+	>提交修改
+		$ git commit -m "add testdel.txt"
+		[master 6b980e3] add testdel.txt
+		 1 file changed, 1 insertion(+)
+		 create mode 100644 testdel.txt
+		 
+	>查看当前状态
+		$ git status
+		On branch master
+		Changes not staged for commit:
+		  (use "git add/rm <file>..." to update what will be committed)
+		  (use "git checkout -- <file>..." to discard changes in working directory)
+
+				deleted:    testdel.txt
+
+		no changes added to commit (use "git add" and/or "git commit -a")
+	
+	从上面可以看到，现在有两个选择，
+		@ 一是确实要从版本库中删除该文件，那就用命令git rm删掉，并且git commit：
+			$ git commit -m "remove testdel.txt"
+			[master f521db3] remove testdel.txt
+			 1 file changed, 1 deletion(-)
+			 delete mode 100644 testdel.txt
+
+		@ 另一种情况是删错了（没有提交修改），因为版本库里还有呢，所以可以很轻松地把误删的文件恢复到最新版本：
+			$ git checkout -- testdel.txt
+
+	-- 理解 --
+	git rm -- filename会将工作区和暂存区中的文件都删除，如果此时已经提交，只能通过版本回退。如果还未提交，可以使用git checkout -- filename将工作区恢复
+
+----------------------- 章节分割线 -----------------------
+	
+3.远程仓库
+	>与远程仓库进行关联
+		$ git remote add origin git@github.com:Bourneer/learngit.git
+		
+	>把本地库的所有内容推送到远程库上
+		$ git push origin master
+		Counting objects: 3, done.
+		Delta compression using up to 4 threads.
+		Compressing objects: 100% (2/2), done.
+		Writing objects: 100% (3/3), 301 bytes | 0 bytes/s, done.
+		Total 3 (delta 0), reused 0 (delta 0)
+		To git@github.com:Bourneer/learngit.git
+		   84cbc24..dd6ab22  master -> master
+	由于远程库是空的，我们第一次推送master分支时，加上了-u参数，Git不但会把本地的master分支内容推送的远程新的master分支，还会把本地的master分支和远程的master分支关联起来，在以后的推送或者拉取时就可以简化命令。
+	
+	从现在起，只要本地作了提交，就可以通过命令：
+		$ git push origin master
+
+	-- 错误解决方法 --
+	Q：fatal: remote origin already exists.
+	A：执行git remote rm origin命令
+	
+3.1.从远程库克隆
+	>用命令git clone克隆一个本地库
+		$ git clone git@github.com:Bourneer/gitskills.git
+		Cloning into 'gitskills'...
+		remote: Counting objects: 3, done.
+		remote: Total 3 (delta 0), reused 0 (delta 0), pack-reused 0
+		Receiving objects: 100% (3/3), done.
+		Checking connectivity... done.
+		
+	Git支持多种协议，包括https，但通过ssh支持的原生git协议速度最快。
+
+----------------------- 章节分割线 -----------------------
+
+4.分支管理
+	分支的作用
+		假设你准备开发一个新功能，但是需要两周才能完成，第一周你写了50%的代码，如果立刻提交，由于代码还没写完，不完整的代码库会导致别人不能干活了。如果等代码全部写完再一次提交，又存在丢失每天进度的巨大风险。
+		现在有了分支，就不用怕了。你创建了一个属于你自己的分支，别人看不到，还继续在原来的分支上正常工作，而你在自己的分支上干活，想提交就提交，直到开发完毕后，再一次性合并到原来的分支上，这样，既安全，又不影响别人工作。
+	
+4.1.创建与合并分支
+	master指向提交，HEAD指向的是当前分支
+	
+	>创建分支dev
+		做法：Git新建一个指针叫dev，指向master相同的提交，再把HEAD指向dev，就表示当前分支在dev上
+			$ git checkout -b dev
+			Switched to a new branch 'dev'
+			
+		-b参数表示创建并切换，相当于以下两条命令：
+			$ git branch dev
+			$ git checkout dev
+			Switched to branch 'dev'
+			
+		查看当前分支
+			$ git branch
+			* dev
+			  master
+
+			
+	>合并分支
+		做法：直接把master指向dev的当前提交
+		
+		@ 先切换到master分支
+			$ git checkout master
+			Switched to branch 'master'
+		
+		@ 再合并
+			$ git merge dev
+			Updating dd6ab22..f3102e2
+			Fast-forward
+			 readme.txt | 1 +
+			 1 file changed, 1 insertion(+)
+		
+		注意上面的Fast-forward信息，Git告诉我们，这次合并是“快进模式”，也就是直接把master指向dev的当前提交
+	
+	>删除分支
+		删除dev分支就是把dev指针删除掉
+			$ git branch -d dev
+			Deleted branch dev (was f3102e2).
+		
+		查看当前分支
+			$ git branch
+			* master
+	
+	因为创建、合并和删除分支非常快，所以Git鼓励你使用分支完成某个任务，合并后再删掉分支，这和直接在master分支上工作效果是一样的，但过程更安全。
+
+4.2.解决冲突
+	>当在两个不同的分支对同一个文件进行更新再提交，如果合并两个分支则会引起冲突
+		$ git merge feature
+		Auto-merging readme.txt
+		CONFLICT (content): Merge conflict in readme.txt
+		Automatic merge failed; fix conflicts and then commit the result.
+	
+	>使用git status查看
+		$ git status
+		On branch master
+		You have unmerged paths.
+		  (fix conflicts and run "git commit")
+
+		Unmerged paths:
+		  (use "git add <file>..." to mark resolution)
+
+				both modified:   readme.txt
+
+		no changes added to commit (use "git add" and/or "git commit -a")
+		
+	>或直接查看冲突文件
+		$ cat readme.txt
+		Git is a version control system
+		Git is free software under the GPL
+		Git add
+		Git has a mutable index called stage
+		Git tracks changes of files
+		<<<<<<< HEAD
+		Creating a new branch is quick & simple.
+		=======
+		Creating a new branch is quick and simple.
+		>>>>>>> feature
+	
+	Git用<<<<<<<，=======，>>>>>>>标记出不同分支的内容。
+	
+	-- 小结 --
+	当Git无法自动合并分支时，就必须首先解决冲突。解决冲突后，再提交，合并完成。
+
+4.3.分支管理策略
+	>合并分支时，如果可能，Git会用Fast forward模式，但这种模式下，删除分支后，会丢掉分支信息。
+	>如果要强制禁用Fast forward模式，Git就会在merge时生成一个新的commit，这样，从分支历史上就可以看出分支信息。
+		$ git merge --no-ff -m "merge with no-ff" dev
+		Merge made by the 'recursive' strategy.
+		 readme.txt | 1 +
+		 1 file changed, 1 insertion(+)
+	
+	--no-ff参数表示禁用Fast forward	
+	因为本次合并要创建一个新的commit，所以加上-m参数，把commit描述写进去。
+	
+	>查看分支历史
+		$ git log --graph --pretty=oneline  --abbrev-commit
+		*   9736ee2 merge with no-ff
+		|\
+		| * 69a44d7 test no-fast-forward
+		|/
+		*   ca6f339 conflict fixed
+
+	>分支策略
+		实际开发中遵循的原则
+			master分支应该是非常稳定的，也就是仅用来发布新版本，平时不能在上面干活
+			干活都在dev分支上，也就是说，dev分支是不稳定的，到某个时候，比如1.0版本发布时，再把dev分支合并到master上，在master分支发布1.0版本；
+			每个人都在dev分支上干活，每个人都有自己的分支，时不时地往dev分支上合并就可以了。
+		
+4.4.Bug分支
+	>保存现场
+		$ git stash
+		Saved working directory and index state WIP on dev: 69a44d7 test no-fast-forward
+		HEAD is now at 69a44d7 test no-fast-forward
+	
+	>修复Bug
+		@ 假定在master分支上修复Bug 101，就从master创建临时分支issue-101
+		@ 提交修改
+		@ 切换到master分支，并完成合并
+		@ 删除issue-101分支
+	
+	>恢复现场
+		@ 查看保存的现场
+			$ git stash list
+			stash@{0}: WIP on dev: 69a44d7 test no-fast-forward
+		@ 恢复现场
+			* 一是用git stash apply恢复，但是恢复后，stash内容并不删除，你需要用git stash drop来删除；
+				$ git stash apply
+				On branch dev
+				Changes not staged for commit:
+				  (use "git add <file>..." to update what will be committed)
+				  (use "git checkout -- <file>..." to discard changes in working directory)
+
+						modified:   readme.txt
+
+				no changes added to commit (use "git add" and/or "git commit -a")
+				
+				$ git stash drop
+				Dropped refs/stash@{0} (5b50f0f3031b68d2fe941f760835c0ccb4f8235f)
+			
+			-- Q&A --
+			Q：error: Your local changes to the following files would be overwritten by checkout:
+				readme.txt
+				Please, commit your changes or stash them before you can switch branches.
+				Aborting
+			A：必须先git add，再将修改提交git commit -m "some message"
+
+			* 另一种方式是用git stash pop，恢复的同时把stash内容也删了：
+				$ git stash pop
+				On branch dev
+				nothing to commit, working directory clean
+				Dropped refs/stash@{0} (b54c506056ef691ee16bd4d9b6b9d550e714a3a6)
+				
+	-- 小结 --
+	修复bug时，我们会通过创建新的bug分支进行修复，然后合并，最后删除；
+	当手头工作没有完成时，先把工作现场git stash一下，然后去修复bug，修复后，再git stash pop，回到工作现场。
+
+4.5.Feature分支
+	起因：软件开发中，总有无穷无尽的新的功能要不断添加进来。
+	解决方法：每添加一个新功能，最好新建一个feature分支，在上面开发，完成后，合并，最后，删除该feature分支。这样不会把主分支搞乱
+	
+	>建新分支，例如：feature-vulcan
+	>开发新功能
+	>切回dev分支，合并
+	>删除feature-vulcan（强制删除将参数“-d”改为“-D”，此时不会保存修改）
+
+4.6.多人协作
+	当你从远程仓库克隆时，实际上Git自动把本地的master分支和远程的master分支对应起来了，并且，远程仓库的默认名称是origin。
+	
+	>查看远程库的信息
+		$ git remote
+		origin
+	
+	>查看详细信息添加参数-v
+		$ git remote -v
+		origin  git@github.com:Bourneer/learngit.git (fetch)
+		origin  git@github.com:Bourneer/learngit.git (push)
+	
+	上面显示了可以抓取和推送的origin的地址。如果没有推送权限，就看不到push的地址。
+	
+	>推送分支
+		@ 把该分支上的所有本地提交推送到远程库。推送时，要指定本地分支，这样，Git就会把该分支推送到远程库对应的远程分支上：
+			$ git push origin master
+		
+		@ 如果要推送其他分支，比如dev，就改成：
+			$ git push origin dev
+
+
+
+			
