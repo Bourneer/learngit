@@ -6,3 +6,5 @@ Git tracks changes of files
 Creating a new branch is quick & simple.
 no fast forvard testing
 test push...
+
+>>>> add by somebody <<<<
